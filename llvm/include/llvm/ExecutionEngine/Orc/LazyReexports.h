@@ -18,7 +18,9 @@
 
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
+#include "llvm/ExecutionEngine/Orc/Speculation.h"
 
+#include "llvm/Support/FileOutputBuffer.h"
 namespace llvm {
 
 class Triple;
@@ -159,7 +161,7 @@ public:
                                    IndirectStubsManager &ISManager,
                                    JITDylib &SourceJD,
                                    SymbolAliasMap CallableAliases,
-                                   VModuleKey K);
+                                   ImplSymbolMap *SrcJDLoc, VModuleKey K);
 
   StringRef getName() const override;
 
@@ -174,6 +176,7 @@ private:
   SymbolAliasMap CallableAliases;
   std::shared_ptr<LazyCallThroughManager::NotifyResolvedFunction>
       NotifyResolved;
+  ImplSymbolMap *AliaseeTable;
 };
 
 /// Define lazy-reexports based on the given SymbolAliasMap. Each lazy re-export
@@ -182,9 +185,10 @@ private:
 inline std::unique_ptr<LazyReexportsMaterializationUnit>
 lazyReexports(LazyCallThroughManager &LCTManager,
               IndirectStubsManager &ISManager, JITDylib &SourceJD,
-              SymbolAliasMap CallableAliases, VModuleKey K = VModuleKey()) {
+              SymbolAliasMap CallableAliases, ImplSymbolMap *SrcJDLoc,
+              VModuleKey K = VModuleKey()) {
   return llvm::make_unique<LazyReexportsMaterializationUnit>(
-      LCTManager, ISManager, SourceJD, std::move(CallableAliases),
+      LCTManager, ISManager, SourceJD, std::move(CallableAliases), SrcJDLoc,
       std::move(K));
 }
 
